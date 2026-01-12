@@ -161,9 +161,13 @@ def handle_open_reservation_modal(ack, body, client):
                 "block_id": "channel_block",
                 "label": {"type": "plain_text", "text": "対象チャンネル"},
                 "element": {
-                    "type": "channels_select",
+                    "type": "conversations_select",
                     "action_id": "channel_select",
-                    "placeholder": {"type": "plain_text", "text": "チャンネルを選択"}
+                    "placeholder": {"type": "plain_text", "text": "チャンネルを選択"},
+                    "filter": {
+                        "include": ["public", "private"],
+                        "exclude_bot_users": True
+                    }
                 }
             },
             {
@@ -243,7 +247,7 @@ def handle_reservation_submission(ack, body, client, view):
     # フォームの値を取得
     values = view["state"]["values"]
 
-    channel_id = values["channel_block"]["channel_select"]["selected_channel"]
+    channel_id = values["channel_block"]["channel_select"]["selected_conversation"]
     date_str = values["date_block"]["date_select"]["selected_date"]
     start_time_str = values["start_time_block"]["start_time_select"]["selected_option"]["value"]
     end_time_str = values["end_time_block"]["end_time_select"]["selected_option"]["value"]
