@@ -2,6 +2,7 @@
 会議室予約Bot - Botモーダル版
 メンションでモーダルフォームを表示して予約・キャンセルを行う
 """
+import logging
 import re
 import threading
 import time
@@ -9,6 +10,12 @@ from datetime import datetime
 
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+
+# ログ設定（接続状態の監視用）
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 from config import (
     SLACK_BOT_TOKEN,
@@ -85,8 +92,12 @@ def handle_app_mention(body, client, event, say):
     text = event["text"]
     user_id = event["user"]
 
-    # Botへのメンション部分を除去
-    text = re.sub(r"<@[A-Z0-9]+>", "", text).strip()
+    print(f"[DEBUG] Received mention: {repr(text)}")
+
+    # Botへのメンション部分を除去（大文字小文字両対応）
+    text = re.sub(r"<@[A-Za-z0-9]+>", "", text).strip()
+
+    print(f"[DEBUG] After cleanup: {repr(text)}")
 
     if text.startswith("予約"):
         # ボタン付きメッセージを送信
@@ -521,9 +532,19 @@ def main():
     reminder_thread.start()
     print("Reminder scheduler started.")
 
-    handler = SocketModeHandler(app, SLACK_APP_TOKEN)
-    print("Bot is running...")
-    handler.start()
+    # Socket Mode接続（自動再接続付き）
+    while True:
+        try:
+            handler = SocketModeHandler(app, SLACK_APP_TOKEN)
+            print("Bot is running... (Socket Mode)")
+            handler.start()
+        except KeyboardInterrupt:
+            print("Bot stopped by user.")
+            break
+        except Exception as e:
+            print(f"Connection error: {e}")
+            print("Reconnecting in 5 seconds...")
+            time.sleep(5)
 
 
 if __name__ == "__main__":
