@@ -14,7 +14,6 @@ from config import (
     SLACK_BOT_TOKEN,
     SLACK_SIGNING_SECRET,
     SLACK_APP_TOKEN,
-    RESERVATION_CHANNEL_ID,
     REMINDER_OPTIONS,
 )
 from database import (
@@ -293,25 +292,17 @@ def handle_reservation_submission(ack, body, client, view):
 
     # 予約完了メッセージ
     message = (
-        f"予約が完了しました！\n\n"
+        f"新しい予約が作成されました\n\n"
         f"*予約ID:* {reservation_id}\n"
-        f"*対象チャンネル:* <#{channel_id}>\n"
         f"*予約者:* {user_name}\n"
         f"*日時:* {start_dt.strftime('%Y/%m/%d %H:%M')} - {end_dt.strftime('%H:%M')}\n"
         f"*ミーティング名:* {event_name}\n"
         f"*リマインド:* {format_reminder_text(reminder_minutes)}"
     )
 
-    # 予約通知チャンネルに投稿
-    if RESERVATION_CHANNEL_ID:
-        client.chat_postMessage(
-            channel=RESERVATION_CHANNEL_ID,
-            text=f"新しい予約が作成されました\n\n{message}"
-        )
-
-    # ユーザーにDMで通知
+    # 対象チャンネルに通知
     client.chat_postMessage(
-        channel=user_id,
+        channel=channel_id,
         text=message
     )
 
@@ -387,22 +378,16 @@ def handle_cancel_submission(ack, body, client, view):
     if deleted:
         start = datetime.fromisoformat(deleted["start_time"])
         message = (
-            f"予約をキャンセルしました\n\n"
+            f"予約がキャンセルされました\n\n"
             f"*予約ID:* {deleted['id']}\n"
+            f"*キャンセル者:* <@{user_id}>\n"
             f"*日時:* {start.strftime('%Y/%m/%d %H:%M')}\n"
             f"*ミーティング名:* {deleted['event_name']}"
         )
 
-        # 予約通知チャンネルに投稿
-        if RESERVATION_CHANNEL_ID:
-            client.chat_postMessage(
-                channel=RESERVATION_CHANNEL_ID,
-                text=f"予約がキャンセルされました\n\n{message}"
-            )
-
-        # ユーザーにDMで通知
+        # 対象チャンネルに通知
         client.chat_postMessage(
-            channel=user_id,
+            channel=deleted["channel_id"],
             text=message
         )
     else:
