@@ -42,28 +42,37 @@ def format_reminder_text(minutes: int) -> str:
     return f"{minutes}分前"
 
 
+# キャッシュ用変数（起動時に一度だけ生成）
+_TIME_OPTIONS = None
+_REMINDER_OPTIONS = None
+
+
 def generate_time_options():
-    """時刻選択用のオプションを生成（30分刻み）"""
-    options = []
-    for hour in range(7, 22):
-        for minute in [0, 30]:
-            time_str = f"{hour:02d}:{minute:02d}"
-            options.append({
-                "text": {"type": "plain_text", "text": time_str},
-                "value": time_str
-            })
-    return options
+    """時刻選択用のオプションを生成（30分刻み）- キャッシュ"""
+    global _TIME_OPTIONS
+    if _TIME_OPTIONS is None:
+        _TIME_OPTIONS = []
+        for hour in range(7, 22):
+            for minute in [0, 30]:
+                time_str = f"{hour:02d}:{minute:02d}"
+                _TIME_OPTIONS.append({
+                    "text": {"type": "plain_text", "text": time_str},
+                    "value": time_str
+                })
+    return _TIME_OPTIONS
 
 
 def generate_reminder_options():
-    """リマインダー選択用のオプションを生成"""
-    options = []
-    for text, minutes in REMINDER_OPTIONS.items():
-        options.append({
-            "text": {"type": "plain_text", "text": text},
-            "value": str(minutes)
-        })
-    return options
+    """リマインダー選択用のオプションを生成 - キャッシュ"""
+    global _REMINDER_OPTIONS
+    if _REMINDER_OPTIONS is None:
+        _REMINDER_OPTIONS = []
+        for text, minutes in REMINDER_OPTIONS.items():
+            _REMINDER_OPTIONS.append({
+                "text": {"type": "plain_text", "text": text},
+                "value": str(minutes)
+            })
+    return _REMINDER_OPTIONS
 
 
 # ====================
